@@ -17,7 +17,6 @@ public class Encrypt {
     public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, ShortBufferException, IllegalBlockSizeException, BadPaddingException, IOException {
         //username:realm:password
 
-        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
         String username = args[1];
         String site = args[2];
         Scanner scanner = new Scanner(System.in);
@@ -26,23 +25,24 @@ public class Encrypt {
 
         var cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
-        byte [] iv = {0,0,0,0,0,0,-120,125,124,95,25,1,-15,14,2,34};
-        IvParameterSpec ivspec = new IvParameterSpec(iv);
         byte [] keyBytes = {0x00,0x01,0x02,0x02,0x03,0x04,0x05,0x07,0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15};
         SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
 
         byte [] data = (username +":"+ site +":"+ password).getBytes(StandardCharsets.UTF_8);
 
-        cipher.init(Cipher.ENCRYPT_MODE,key,ivspec);
+        cipher.init(Cipher.ENCRYPT_MODE,key);
+        byte [] iv = cipher.getIV();
         byte [] cipherText = cipher.doFinal(data);
+
         String cipherTextString = Hex.encodeHexString(cipherText);
+        String ivString = Hex.encodeHexString(iv);
         System.out.println(cipherTextString);
-        writeInFile(args,cipherTextString);
+        writeInFile(args,cipherTextString,ivString);
     }
 
-    private static void writeInFile(String[] args, String digestString) throws IOException {
+    private static void writeInFile(String[] args, String digestString,String ivString) throws IOException {
         BufferedWriter writer = new BufferedWriter(new FileWriter(args[0]));
-        writer.write(digestString);
+        writer.write(digestString+":"+ivString);
         writer.close();
         System.out.println("Digest write in file : "+ args[0]);
     }
