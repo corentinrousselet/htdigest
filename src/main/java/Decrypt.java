@@ -9,21 +9,22 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.cert.CertificateException;
 
 public class Decrypt {
-    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, DecoderException, IllegalBlockSizeException, BadPaddingException, IOException {
+    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, DecoderException, IllegalBlockSizeException, BadPaddingException, IOException, CertificateException, UnrecoverableKeyException, KeyStoreException {
         var cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 
-        byte[] keyBytes = {0x00, 0x01, 0x02, 0x02, 0x03, 0x04, 0x05, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15};
-        SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        InputStream readStream = new FileInputStream("keystore.p12");
+        keyStore.load(readStream,"password".toCharArray());
+        Key keyInStore = keyStore.getKey("training","password".toCharArray());
 
         String lineFromFile = readFromFile(args);
 
         IvParameterSpec ivSpec = new IvParameterSpec(Hex.decodeHex(lineFromFile.split(":")[1]));
-        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+        cipher.init(Cipher.DECRYPT_MODE, keyInStore, ivSpec);
 
         byte[] cipherText = Hex.decodeHex(lineFromFile.split(":")[0]);
 
